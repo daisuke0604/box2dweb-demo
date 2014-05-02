@@ -25,7 +25,7 @@ var b2Vec2 = Box2D.Common.Math.b2Vec2
 // canvas
 var world;
 
-var GRAVITY = 25.0;
+var GRAVITY = 100.0;
 var gx = 0.0;
 var gy = GRAVITY;
 
@@ -48,7 +48,7 @@ $(document).ready(function() {
   var fixDef = new b2FixtureDef;
   fixDef.density = 1.0;       // 密度
   fixDef.friction = 0.5;      // 摩擦
-  fixDef.restitution = 0.9;   // 反発
+  fixDef.restitution = 0.8;   // 反発
 
   var bodyDef = new b2BodyDef;
   bodyDef.type = b2Body.b2_staticBody;
@@ -97,7 +97,7 @@ $(document).ready(function() {
     var acg = evt.accelerationIncludingGravity;
     var ax = acg.x;
     var ay = acg.y;
-    if (ax == 0.0 || ay == 0.0) {
+    if (ax == null || ay == null || ax == 0.0 || ay == 0.0) {
       return;
     }
     if (Math.abs(ax) > Math.abs(ay)) {
