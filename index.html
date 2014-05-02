@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Box2D Demo</title>
+<style type="text/css">body {margin:0; padding:0;} canvas {display:block;}</style>
+<body>
+<canvas id="canvas"></canvas>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="./Box2dWeb-2.1.a.3.min.js"></script>
+<script type="text/javascript">
+
+// box2dweb lib
+var b2Vec2 = Box2D.Common.Math.b2Vec2
+   ,b2BodyDef = Box2D.Dynamics.b2BodyDef
+   ,b2Body = Box2D.Dynamics.b2Body
+   ,b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+   ,b2Fixture = Box2D.Dynamics.b2Fixture
+   ,b2World = Box2D.Dynamics.b2World
+   ,b2MassData = Box2D.Collision.Shapes.b2MassData
+   ,b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+   ,b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+   ,b2DebugDraw = Box2D.Dynamics.b2DebugDraw
+;
+
+// canvas
+var world;
+
+var GRAVITY = 25.0;
+var gx = 0.0;
+var gy = GRAVITY;
+
+var SCREEN_W = document.documentElement.clientWidth;
+var SCREEN_H = document.documentElement.clientHeight;
+
+var SCALE = 30.0;   // 30pixel = 1meter
+
+var NUM_OF_BALLS = 50;
+
+//
+$(document).ready(function() {
+
+  var canvas = document.getElementById("canvas");
+  canvas.width = SCREEN_W;
+  canvas.height = SCREEN_H;
+
+  world = new b2World(new b2Vec2(gx, gy), false);
+
+  var fixDef = new b2FixtureDef;
+  fixDef.density = 1.0;       // 密度
+  fixDef.friction = 0.5;      // 摩擦
+  fixDef.restitution = 0.9;   // 反発
+
+  var bodyDef = new b2BodyDef;
+  bodyDef.type = b2Body.b2_staticBody;
+
+  // create left wall
+  fixDef.shape = new b2PolygonShape;
+  fixDef.shape.SetAsEdge(new b2Vec2(0, 0), new b2Vec2(0, SCREEN_H / SCALE));
+  world.CreateBody(new b2BodyDef).CreateFixture(fixDef);
+  // create right wall
+  fixDef.shape = new b2PolygonShape;
+  fixDef.shape.SetAsEdge(new b2Vec2(SCREEN_W / SCALE, 0), new b2Vec2(SCREEN_W / SCALE, SCREEN_H / SCALE));
+  world.CreateBody(new b2BodyDef).CreateFixture(fixDef);
+  // create top wall
+  fixDef.shape = new b2PolygonShape;
+  fixDef.shape.SetAsEdge(new b2Vec2(0, 0), new b2Vec2(SCREEN_W / SCALE, 0));
+  world.CreateBody(new b2BodyDef).CreateFixture(fixDef);
+  // create bottom wall
+  fixDef.shape = new b2PolygonShape;
+  fixDef.shape.SetAsEdge(new b2Vec2(0, SCREEN_H / SCALE), new b2Vec2(SCREEN_W / SCALE, SCREEN_H / SCALE));
+  world.CreateBody(new b2BodyDef).CreateFixture(fixDef);
+
+  // create circle objects
+  bodyDef.type = b2Body.b2_dynamicBody;
+  for (var i = 0; i < NUM_OF_BALLS; i++) {
+    fixDef.shape = new b2CircleShape(
+      0.2 //radius
+    );
+    bodyDef.position.x = Math.random() * (SCREEN_W / SCALE);
+    bodyDef.position.y = Math.random() * 1;
+    world.CreateBody(bodyDef).CreateFixture(fixDef);
+  }
+
+  // setup debug draw
+  var debugDraw = new b2DebugDraw();
+  debugDraw.SetSprite(canvas.getContext("2d"));
+  debugDraw.SetDrawScale(SCALE);
+  debugDraw.SetFillAlpha(0.5);
+  debugDraw.SetLineThickness(1.0);
+  debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+  world.SetDebugDraw(debugDraw);
+
+  window.setInterval(update, 1000 / 60);
+
+  // iOS加速度センサイベント
+  window.addEventListener("devicemotion", function(evt) {
+    var acg = evt.accelerationIncludingGravity;
+    var ax = acg.x;
+    var ay = acg.y;
+    if (ax == 0.0 || ay == 0.0) {
+      return;
+    }
+    if (Math.abs(ax) > Math.abs(ay)) {
+      if (ax > 0) {
+        gx = GRAVITY;
+        gy = 0 - (ay / ax * GRAVITY);
+      } else {
+        gx = 0 - GRAVITY;
+        gy = ay / ax * GRAVITY;
+      }
+    } else {
+      if (ay > 0) {
+        gx = ax / ay * GRAVITY;
+        gy = 0 - GRAVITY;
+      } else {
+        gx = 0 - (ax / ay * GRAVITY);
+        gy = GRAVITY;
+      }
+    }
+  }, true);
+
+  // window close
+  $('#close-btn').click(function() {
+    window.close();
+  });
+});
+function update() {
+  world.SetGravity(new b2Vec2(gx, gy));
+  world.Step(
+    1 / 60  // frame-rate
+    ,  10   // velocity iterations
+    ,  10   // position iterations
+  );
+  world.DrawDebugData();
+  world.ClearForces();
+};
+</script>
+</body>
