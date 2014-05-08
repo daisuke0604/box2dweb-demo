@@ -70,15 +70,29 @@ $(document).ready(function() {
   fixDef.shape.SetAsEdge(new b2Vec2(0, SCREEN_H / SCALE), new b2Vec2(SCREEN_W / SCALE, SCREEN_H / SCALE));
   world.CreateBody(new b2BodyDef).CreateFixture(fixDef);
 
-  // create circle objects
-  bodyDef.type = b2Body.b2_dynamicBody;
+  // create circle object
+  var createCircle = function(world, bodyDef, fixDef, x, y) {
+      bodyDef.type = b2Body.b2_dynamicBody;
+      fixDef.shape = new b2CircleShape(Math.random() / 3 + 0.1);
+      bodyDef.position.x = x;
+      bodyDef.position.y = y;
+      world.CreateBody(bodyDef).CreateFixture(fixDef);
+  }
+
+  // create box object
+  var createBox = function(world, bodyDef, fixDef, x, y) {
+      bodyDef.type = b2Body.b2_dynamicBody;
+      fixDef.shape = new b2PolygonShape;
+      var size = Math.random() / 3;
+      fixDef.shape.SetAsBox(size + 0.1, size + 0.1);
+      bodyDef.position.x = x;
+      bodyDef.position.y = y;
+      world.CreateBody(bodyDef).CreateFixture(fixDef);
+  }
+
+  // create objects
   for (var i = 0; i < NUM_OF_BALLS; i++) {
-    fixDef.shape = new b2CircleShape(
-      0.2 //radius
-    );
-    bodyDef.position.x = Math.random() * (SCREEN_W / SCALE);
-    bodyDef.position.y = Math.random() * 1;
-    world.CreateBody(bodyDef).CreateFixture(fixDef);
+    createCircle(world, bodyDef, fixDef, Math.random() * (SCREEN_W / SCALE), Math.random() * 1);
   }
 
   // setup debug draw
@@ -119,11 +133,21 @@ $(document).ready(function() {
     }
   }, true);
 
+  $(window).bind("click touchstart", function() {
+    var body = world.GetBodyList();
+    while(body) {
+      body.ApplyImpulse(new b2Vec2(gx, gy * -0.1), body.GetPosition());
+      body = body.GetNext();
+    }
+  });
+
   // window close
   $('#close-btn').click(function() {
     window.close();
   });
 });
+
+//
 function update() {
   world.SetGravity(new b2Vec2(gx, gy));
   world.Step(
